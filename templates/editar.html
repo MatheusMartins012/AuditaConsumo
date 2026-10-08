@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Editar lançamento</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body data-tem-foto="{{ 'true' if registro.foto_avaria else 'false' }}">
+<main class="container">
+    <header class="topo">
+        <div class="marca">✏️</div>
+        <div>
+            <h1>Editar lançamento</h1>
+            <p>Corrija as informações e salve.</p>
+        </div>
+    </header>
+
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+        {% for categoria, mensagem in mensagens %}
+            <div class="aviso {{ categoria }}" role="status">
+                {{ mensagem }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <section class="painel">
+        <form method="POST" enctype="multipart/form-data">
+            <label for="produto">Nome do produto</label>
+            <input id="produto" name="produto" type="text"
+                   value="{{ registro.produto }}" required maxlength="120">
+
+            <div class="linha">
+                <div class="campo">
+                    <label for="quantidade">Quantidade</label>
+                    <input id="quantidade" name="quantidade"    
+                           type="number" min="0.001" step="0.001"
+                           value="{{ registro.quantidade }}" required>
+                </div>
+
+                <div class="campo">
+                    <label for="unidade">Unidade</label>
+                    <select id="unidade" name="unidade" required>
+                        <option value="kg"
+                            {% if registro.unidade == 'kg' %}selected{% endif %}>
+                            Quilogramas (kg)
+                        </option>
+                        <option value="un"
+                            {% if registro.unidade == 'un' %}selected{% endif %}>
+                            Unidades (un)
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <label for="data_lancamento">Data</label>
+            <input id="data_lancamento" name="data_lancamento"
+                   type="date" value="{{ registro.data_lancamento }}" required>
+
+            <label for="responsavel">Quem está lançando?</label>
+            <input id="responsavel" name="responsavel"
+                   type="text" value="{{ registro.responsavel }}"
+                   required maxlength="80">
+
+            <fieldset>
+                <legend>Tipo de lançamento</legend>
+                <div class="tipos">
+                    <label class="tipo avaria">
+                        <input type="radio" name="tipo" value="Avaria"
+                            {% if registro.tipo == 'Avaria' %}checked{% endif %}>
+                        <span>📦 Avaria</span>
+                    </label>
+
+                    <label class="tipo consumo">
+                        <input type="radio" name="tipo" value="Consumo"
+                            {% if registro.tipo == 'Consumo' %}checked{% endif %}>
+                        <span>🍲 Consumo</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <div id="foto-container" class="foto-container"
+                 {% if registro.tipo != 'Avaria' %}hidden{% endif %}>
+                <label for="foto">📷 Foto da avaria
+                    {% if registro.foto_avaria %}
+                        <span class="opcional">(opcional para manter a atual)</span>
+                    {% else %}
+                        <span class="obrigatorio">(obrigatória)</span>
+                    {% endif %}
+                </label>
+
+                <input id="foto" name="foto" type="file"
+                       accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                       {% if registro.tipo == 'Avaria' and not registro.foto_avaria %}required{% endif %}>
+
+                {% if registro.foto_avaria %}
+                    <small>Já existe uma foto cadastrada. Escolha outra somente se quiser substituí-la.</small>
+                {% else %}
+                    <small>Adicione uma foto para comprovar a avaria. Máximo: 10 MB.</small>
+                {% endif %}
+            </div>
+
+            <button class="salvar" type="submit">
+                Salvar alterações
+            </button>
+
+            <a class="exportar" href="{{ url_for('inicio') }}">
+                Voltar sem salvar
+            </a>
+        </form>
+    </section>
+</main>
+
+<script>
+    const radiosTipo = document.querySelectorAll('input[name="tipo"]');
+    const fotoContainer = document.getElementById('foto-container');
+    const fotoInput = document.getElementById('foto');
+    const temFotoAtual = document.body.dataset.temFoto === 'true';
+
+    function atualizarCampoFoto() {
+        const avariaSelecionada = document.querySelector(
+            'input[name="tipo"][value="Avaria"]:checke  d'
+        );
+
+        const ehAvaria = !!avariaSelecionada;
+
+        fotoContainer.hidden = !ehAvaria;
+
+        // Se já existe uma foto, ela pode ser mantida sem escolher outra.
+        // Se não existe foto, ao selecionar Avaria o campo é obrigatório.
+        fotoInput.required = ehAvaria && !temFotoAtual;
+
+        if (!ehAvaria) {
+            fotoInput.required = false;
+            fotoInput.value = "";
+        }
+    }
+
+    radiosTipo.forEach(radio => {
+        radio.addEventListener('change', atualizarCampoFoto);
+    });
+
+    atualizarCampoFoto();
+</script>
+</body>
+</html>

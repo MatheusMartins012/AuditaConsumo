@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+
+.venv/
+venv/
+
+.env
+
+registros.db
+
+fotos_avarias/
